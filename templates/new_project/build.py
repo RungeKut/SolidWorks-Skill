@@ -1,46 +1,31 @@
 # -*- coding: utf-8 -*-
 """Построение всех деталей и сборки. Запускать из папки проекта:
 
-    C:\\Users\\Work\\AppData\\Local\\Programs\\Python\\Python313\\python.exe build.py
-    ...\\python.exe build.py 01_Основание       только одну деталь
+    python build.py
+    python build.py 01_Основание       только одну деталь
 
-SolidWorks должен быть запущен заранее.
+SolidWorks должен быть запущен заранее; Python — 64-bit с pywin32.
+
+KIT — корень набора solidworks (папка его SKILL.md); вписывается при
+копировании шаблона в проект. Пока шаблон лежит в наборе, корень находится
+от этого файла. Переменные окружения не читаются: устаревшая ведёт в
+пустоту (skill-skill, 30-01).
 """
 import os
 import sys
 
+KIT = None
+
 
 def kit_root():
-    """Найти корень SolidWorks-Kit, не завися от того, куда он склонирован.
-
-    Порядок поиска:
-      1. переменная окружения SWKIT_HOME (её ставит tools/setup.ps1);
-      2. junction скилла ~/.claude/skills/solidworks -> <корень>/skill;
-      3. соседняя папка SolidWorks-Kit рядом с проектом или на рабочем столе.
-
-    Так один и тот же скрипт работает на любой машине без правки путей.
-    """
-    env = os.environ.get("SWKIT_HOME")
-    if env and os.path.isdir(os.path.join(env, "swkit")):
-        return env
-
-    junction = os.path.join(os.path.expanduser("~"), ".claude", "skills",
-                            "solidworks")
-    if os.path.isdir(junction):
-        cand = os.path.dirname(os.path.realpath(junction))
-        if os.path.isdir(os.path.join(cand, "swkit")):
-            return cand
-
+    """Корень набора: KIT, иначе на два уровня выше папки шаблона."""
     here = os.path.dirname(os.path.abspath(__file__))
-    for base in (os.path.dirname(here),
-                 os.path.join(os.path.expanduser("~"), "Desktop")):
-        cand = os.path.join(base, "SolidWorks-Kit")
-        if os.path.isdir(os.path.join(cand, "swkit")):
+    for cand in (KIT, os.path.dirname(os.path.dirname(here))):
+        if cand and os.path.isdir(os.path.join(cand, "swkit")):
             return cand
-
     raise RuntimeError(
-        "SolidWorks-Kit не найден. Запустите tools/setup.ps1 из репозитория "
-        "или задайте переменную окружения SWKIT_HOME.")
+        "корень набора solidworks не найден: впишите в KIT в начале build.py "
+        "папку SKILL.md набора")
 
 
 sys.path.insert(0, kit_root())
